@@ -1,15 +1,136 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>甘肃省考备考助手</title>
-<body style="font-family:sans-serif;background:#f2f5fa;padding:20px">
-<h1>甘肃省考备考助手</h1>
-<p>今天也要为自己的目标努力！</p>
-<h2>今日学习计划</h2>
-<label><input type="checkbox"> 行测学习30分钟</label><br><br>
-<label><input type="checkbox"> 行测刷题20道</label><br><br>
-<label><input type="checkbox"> 申论学习30分钟</label><br><br>
-<label><input type="checkbox"> 复习今天的错题</label>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f3f6fb;color:#243047;font-family:-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.5}
+header{background:#244c86;color:white;padding:24px 18px}
+header h1{margin:0 0 6px;font-size:24px}
+header p{margin:0;font-size:14px}
+main{max-width:760px;margin:18px auto;padding:0 13px}
+.card{background:white;padding:17px;border-radius:14px;margin-bottom:14px}
+h2{font-size:18px;margin:0 0 12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:#edf4ff;border-radius:10px;padding:12px 5px;text-align:center}
+.stat strong{display:block;color:#24569a;font-size:22px}
+.stat span,.small{font-size:12px;color:#778399}
+label.field{display:block;font-size:14px;margin-top:8px}
+input:not([type=checkbox]),select,textarea{width:100%;padding:11px;border:1px solid #d5ddeb;border-radius:8px;background:white;font:inherit;margin:5px 0 8px}
+textarea{min-height:76px}
+button{border:0;border-radius:8px;padding:10px 13px;background:#285a9f;color:white;font:inherit;margin:4px}
+button.secondary{background:#e9eef6;color:#29415f}
+button.danger{background:#fff0f0;color:#a42e2e}
+.task{display:flex;align-items:flex-start;gap:9px;padding:11px 0;border-bottom:1px solid #edf0f5}
+.task input{width:20px;height:20px;margin-top:3px}
+.task label{flex:1}
+.task.done label{text-decoration:line-through;color:#8994a5}
+.entry{padding:11px 0;border-bottom:1px solid #edf0f5;overflow-wrap:anywhere}
+footer{text-align:center;color:#8a94a5;font-size:12px;padding:18px}
+</style>
+</head>
+<body>
+<header><h1>甘肃省考备考助手</h1><p>每天积累一点，稳稳向目标前进。</p></header>
+<main>
+<section class="card">
+<h2>📊 今日备考概况</h2>
+<div class="stats">
+<div class="stat"><strong id="doneCount">0/4</strong><span>今日任务</span></div>
+<div class="stat"><strong id="minutesTotal">0</strong><span>今日学习分钟</span></div>
+<div class="stat"><strong id="wrongCount">0</strong><span>错题总数</span></div>
+</div>
+<p class="small" id="todayLabel"></p>
+</section>
+<section class="card">
+<h2>📅 每日学习计划</h2>
+<div id="tasks"></div>
+<label class="field">添加自己的任务</label>
+<input id="newTask" placeholder="例如：资料分析练习15道">
+<button onclick="addTask()">添加任务</button>
+</section>
+<section class="card">
+<h2>⏱️ 学习时长记录</h2>
+<label class="field">学习科目</label>
+<select id="subject">
+<option>行测—言语理解</option><option>行测—判断推理</option><option>行测—资料分析</option><option>行测—数量关系</option><option>行测—常识判断</option><option>申论</option><option>复习错题</option><option>其他</option>
+</select>
+<label class="field">本次学习分钟数</label>
+<input id="duration" type="number" min="1" placeholder="例如：45">
+<button onclick="addStudy()">保存学习记录</button>
+<div id="studyList"></div>
+</section>
+<section class="card">
+<h2>📝 错题本</h2>
+<label class="field">题目或知识点</label>
+<textarea id="question" placeholder="写下做错的题目或知识点"></textarea>
+<label class="field">错误原因</label>
+<select id="reason"><option>知识点不会</option><option>审题不仔细</option><option>计算错误</option><option>解题方法不熟</option><option>时间不够</option><option>其他原因</option></select>
+<label class="field">正确思路 / 复习提醒</label>
+<textarea id="solution" placeholder="下次遇到类似题目，应该怎么做？"></textarea>
+<button onclick="addWrong()">保存错题</button>
+<div id="wrongList"></div>
+</section>
+<section class="card">
+<h2>📔 今日复盘</h2>
+<textarea id="notes" placeholder="今天学会了什么？还有哪些不懂？"></textarea>
+<button onclick="saveNotes()">保存今日复盘</button>
+<span id="notesStatus" class="small"></span>
+</section>
+<section class="card">
+<h2>📈 学习统计</h2>
+<p id="weekStats"></p>
+<div id="subjectStats"></div>
+</section>
+<section class="card">
+<h2>💾 数据备份</h2>
+<p class="small">记录保存在当前浏览器。手机和电脑不会自动同步，建议每周导出备份。</p>
+<button onclick="exportData()">导出备考记录备份</button>
+<label class="field">恢复以前的备份</label>
+<input id="importFile" type="file" accept="application/json,.json" onchange="importData(event)">
+<button class="danger" onclick="clearData()">清空本机记录</button>
+</section>
+</main>
+<footer>甘肃省考备考助手 · 个人学习工具</footer>
+<script>
+const KEY='gansuExamAssistantV2';
+const initialTasks=[{id:1,text:'行测基础学习30分钟',done:false},{id:2,text:'行测专项练习20道',done:false},{id:3,text:'申论学习或练习30分钟',done:false},{id:4,text:'复盘今天的错题',done:false}];
+function blank(){return {tasks:initialTasks.map(x=>({...x})),studies:[],wrongs:[],days:{}}}
+function load(){try{let x=JSON.parse(localStorage.getItem(KEY));if(x&&Array.isArray(x.tasks)&&Array.isArray(x.studies)&&Array.isArray(x.wrongs))return x}catch(e){}return blank()}
+let data=load();
+function dayKey(d=new Date()){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){alert('浏览器无法保存数据，请检查存储空间或隐私设置。');return false}}
+function todayRecord(){let k=dayKey();if(!data.days[k])data.days[k]={notes:''};return data.days[k]}
+function render(){
+let k=dayKey();todayRecord();
+document.getElementById('todayLabel').textContent='今天是 '+k+'。记录保存在当前浏览器。';
+document.getElementById('tasks').innerHTML=data.tasks.map(x=>`<div class="task ${x.done?'done':''}"><input type="checkbox" ${x.done?'checked':''} onchange="toggleTask(${x.id},this.checked)"><label>${esc(x.text)}</label><button class="danger" onclick="deleteTask(${x.id})">删除</button></div>`).join('');
+let studies=data.studies.filter(x=>x.date===k);
+document.getElementById('doneCount').textContent=data.tasks.filter(x=>x.done).length+'/'+data.tasks.length;
+document.getElementById('minutesTotal').textContent=studies.reduce((n,x)=>n+x.minutes,0);
+document.getElementById('wrongCount').textContent=data.wrongs.length;
+document.getElementById('studyList').innerHTML=studies.length?studies.slice().reverse().map(x=>`<div class="entry">${esc(x.subject)}：<strong>${x.minutes} 分钟</strong><br><button class="danger" onclick="deleteStudy(${x.id})">删除记录</button></div>`).join(''):'<p class="small">今天还没有学习时长记录。</p>';
+document.getElementById('wrongList').innerHTML=data.wrongs.length?data.wrongs.slice().reverse().map(x=>`<div class="entry"><strong>${esc(x.question)}</strong><br>错误原因：${esc(x.reason)}<br>正确思路：${esc(x.solution||'暂未填写')}<br><span class="small">${x.date}${x.reviewed?' · 已复习':''}</span><br><button class="secondary" onclick="reviewWrong(${x.id})">标记已复习</button><button class="danger" onclick="deleteWrong(${x.id})">删除</button></div>`).join(''):'<p class="small">还没有错题。</p>';
+document.getElementById('notes').value=todayRecord().notes||'';
+renderStats()
+}
+function toggleTask(id,done){data.tasks=data.tasks.map(x=>x.id===id?{...x,done}:x);persist();render()}
+function addTask(){let e=document.getElementById('newTask'),v=e.value.trim();if(!v)return alert('请先输入任务内容');data.tasks.push({id:Date.now(),text:v,done:false});e.value='';persist();render()}
+function deleteTask(id){if(confirm('确定删除这个任务吗？')){data.tasks=data.tasks.filter(x=>x.id!==id);persist();render()}}
+function addStudy(){let e=document.getElementById('duration'),n=Number(e.value);if(!Number.isFinite(n)||n<1)return alert('请输入大于0的分钟数');data.studies.push({id:Date.now(),subject:document.getElementById('subject').value,minutes:Math.floor(n),date:dayKey()});e.value='';persist();render()}
+function deleteStudy(id){if(confirm('确定删除这条学习记录吗？')){data.studies=data.studies.filter(x=>x.id!==id);persist();render()}}
+function addWrong(){let q=document.getElementById('question').value.trim();if(!q)return alert('请先填写题目或知识点');data.wrongs.push({id:Date.now(),question:q,reason:document.getElementById('reason').value,solution:document.getElementById('solution').value.trim(),date:dayKey(),reviewed:false});document.getElementById('question').value='';document.getElementById('solution').value='';persist();render()}
+function reviewWrong(id){data.wrongs=data.wrongs.map(x=>x.id===id?{...x,reviewed:true}:x);persist();render()}
+function deleteWrong(id){if(confirm('确定删除这道错题吗？')){data.wrongs=data.wrongs.filter(x=>x.id!==id);persist();render()}}
+function saveNotes(){todayRecord().notes=document.getElementById('notes').value;persist();document.getElementById('notesStatus').textContent=' 已保存';}
+function renderStats(){let now=new Date(),start=new Date(now);start.setDate(now.getDate()-6);let keys=[];for(let i=0;i<7;i++){let d=new Date(start);d.setDate(start.getDate()+i);keys.push(dayKey(d))}let total=data.studies.filter(x=>keys.includes(x.date)).reduce((n,x)=>n+x.minutes,0);document.getElementById('weekStats').textContent='最近7天学习 '+total+' 分钟；累计记录 '+data.studies.length+' 次。';let sums={};data.studies.filter(x=>keys.includes(x.date)).forEach(x=>sums[x.subject]=(sums[x.subject]||0)+x.minutes);document.getElementById('subjectStats').innerHTML=Object.keys(sums).length?Object.entries(sums).map(([s,n])=>`<div class="entry">${esc(s)}：${n} 分钟</div>`).join(''):'<p class="small">最近7天还没有学习时长记录。</p>'}
+function exportData(){let blob=new Blob(['\uFEFF'+JSON.stringify(data,null,2)],{type:'application/json;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='甘肃省考备考记录-'+dayKey()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function importData(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x||!Array.isArray(x.tasks)||!Array.isArray(x.studies)||!Array.isArray(x.wrongs)||!x.days)throw Error();if(!confirm('导入会替换当前记录，确定继续吗？'))return;data=x;persist();render();alert('备份恢复成功。')}catch(err){alert('无法识别此备份文件。')}e.target.value=''};r.readAsText(f)}
+function clearData(){if(confirm('确定清空本机全部备考记录吗？建议先导出备份。')){data=blank();persist();render()}}
+render();
+</script>
 </body>
 </html>
